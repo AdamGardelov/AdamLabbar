@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Adam.Functions": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7124",
+      "launchBrowser": false
+    }
+  }
+}
