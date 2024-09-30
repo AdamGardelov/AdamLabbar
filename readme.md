@@ -46,6 +46,21 @@
 
 ## Info
 
+Needs connection strings for redis and service bus to work.
+
+local.settings.json:
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "AzureServiceBusConnectionString": "service-bus-connection-string"
+  }
+}
+```
+
 Might need to install azurite to run the Azure functions locally. You can install it using the following command:
 
 ```bash
