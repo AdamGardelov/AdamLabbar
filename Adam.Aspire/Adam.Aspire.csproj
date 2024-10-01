@@ -10,12 +10,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.0"/>
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="8.2.1" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Adam.Functions\Adam.Functions.csproj" />
-      <ProjectReference Include="..\Adam.WebAPI\Adam.WebAPI.csproj" />
+        <ProjectReference Include="..\Adam.Functions\Adam.Functions.csproj"/>
+        <ProjectReference Include="..\Adam.WebAPI\Adam.WebAPI.csproj"/>
     </ItemGroup>
 
 </Project>

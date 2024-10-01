@@ -5,7 +5,8 @@ using StackExchange.Redis;
 
 namespace Adam.Core.Services;
 
-public sealed class RedisCacheService(IConnectionMultiplexer redis, ILogger<RedisCacheService> logger) : IRedisCacheService
+public sealed class RedisCacheService(IConnectionMultiplexer redis, ILogger<RedisCacheService> logger)
+    : IRedisCacheService
 {
     public async Task<T?> GetCacheValueAsync<T>(string key)
     {
@@ -25,7 +26,8 @@ public sealed class RedisCacheService(IConnectionMultiplexer redis, ILogger<Redi
 
     public async Task SetCacheValueAsync<T>(string key, T value, TimeSpan expirationTime)
     {
-        logger.LogInformation($"Setting cache value for key: {key} with expiration time: {expirationTime.TotalMinutes} minutes");
+        logger.LogInformation(
+            $"Setting cache value for key: {key} with expiration time: {expirationTime.TotalMinutes} minutes");
 
         var db = redis.GetDatabase();
         var serializedValue = JsonSerializer.Serialize(value);

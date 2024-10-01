@@ -14,23 +14,24 @@ public sealed class ProductRepository(
     ProductDbContext dbContext)
     : IProductRepository
 {
-    public async Task<IEnumerable<Product>> GetProductsAsync()
+    public async Task<IEnumerable<Product>> GetProductsAsync(CancellationToken cancellationToken)
     {
-        var cachedProducts = (await cacheService.GetCacheValueAsync<IEnumerable<Product>>(ProductConstants.ProductsCacheKey))?.ToList();
+        var cachedProducts =
+            (await cacheService.GetCacheValueAsync<IEnumerable<Product>>(ProductConstants.ProductsCacheKey))?.ToList();
         if (cachedProducts != null && cachedProducts.Count != 0)
         {
             logger.LogInformation("Retrieved product list from cache.");
             return cachedProducts;
         }
-        
-        var products = await dbContext.Products.ToListAsync();
+
+        var products = await dbContext.Products.ToListAsync(cancellationToken);
         await cacheService.SetCacheValueAsync(ProductConstants.ProductsCacheKey, products, TimeSpan.FromMinutes(10));
 
         logger.LogInformation("Product list cached.");
         return products;
     }
 
-    public async Task<Product?> GetProductAsync(int id)
+    public async Task<Product?> GetProductAsync(int id, CancellationToken cancellationToken)
     {
         var cacheKey = $"Product_{id}";
         var cachedProduct = await cacheService.GetCacheValueAsync<Product>(cacheKey);
@@ -39,8 +40,8 @@ public sealed class ProductRepository(
             logger.LogInformation($"Retrieved product with id {id} from cache.");
             return cachedProduct;
         }
-        
-        var product = await dbContext.Products.FindAsync(id);
+
+        var product = await dbContext.Products.FindAsync(id, cancellationToken);
         if (product != null)
         {
             await cacheService.SetCacheValueAsync(cacheKey, product, TimeSpan.FromMinutes(10));
@@ -52,7 +53,8 @@ public sealed class ProductRepository(
         throw new KeyNotFoundException($"Product with ID {id} was not found.");
     }
 
-    public async Task<Product> CreateProductAsync(CreateProductCommand productCommand)
+    public async Task<Product> CreateProductAsync(CreateProductCommand productCommand,
+        CancellationToken cancellationToken)
     {
         var product = new Product
         {
@@ -62,22 +64,23 @@ public sealed class ProductRepository(
         };
 
         dbContext.Products.Add(product);
-        await dbContext.SaveChangesAsync();
-        
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         logger.LogInformation($"Product with id {productCommand.Id} created.");
-        
+
         // Cache the product in redis
         var cacheKey = $"Product_{productCommand.Id}";
         await cacheService.SetCacheValueAsync(cacheKey, product, TimeSpan.FromMinutes(10));
-        
+
         await InvalidateProductListCacheAsync();
 
         return product;
     }
 
-    public async Task<Product?> UpdateProductAsync(UpdateProductCommand productCommand)
+    public async Task<Product?> UpdateProductAsync(UpdateProductCommand productCommand,
+        CancellationToken cancellationToken)
     {
-        var existingProduct = await dbContext.Products.FindAsync(productCommand.Id);
+        var existingProduct = await dbContext.Products.FindAsync(productCommand.Id, cancellationToken);
         if (existingProduct == null)
         {
             logger.LogWarning($"Product with id {productCommand.Id} not found for update.");
@@ -95,20 +98,20 @@ public sealed class ProductRepository(
         }
 
         dbContext.Products.Update(existingProduct);
-        await dbContext.SaveChangesAsync();
-        
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         logger.LogInformation($"Product with id {productCommand.Id} updated.");
-        
+
         // Update the product in redis cache
         var cacheKey = $"Product_{productCommand.Id}";
         await cacheService.SetCacheValueAsync(cacheKey, existingProduct, TimeSpan.FromMinutes(10));
-        
+
         await InvalidateProductListCacheAsync();
 
         return existingProduct;
     }
 
-    public async Task<bool> DeleteProductAsync(int id)
+    public async Task<bool> DeleteProductAsync(int id, CancellationToken cancellationToken)
     {
         var product = dbContext.Products.FirstOrDefault(p => p.Id == id);
         if (product == null)
@@ -118,8 +121,8 @@ public sealed class ProductRepository(
         }
 
         dbContext.Products.Remove(product);
-        await dbContext.SaveChangesAsync();
-        
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         // Remove the product from redis cache
         var cacheKey = $"Product_{id}";
         await cacheService.SetCacheValueAsync<Product?>(cacheKey, null, TimeSpan.Zero);
@@ -139,10 +142,11 @@ public sealed class ProductRepository(
         var updatedProductList = await dbContext.Products.ToListAsync();
 
         // Update the redis cache with the updated product list
-        await cacheService.SetCacheValueAsync(ProductConstants.ProductsCacheKey, updatedProductList, TimeSpan.FromMinutes(10));
+        await cacheService.SetCacheValueAsync(ProductConstants.ProductsCacheKey, updatedProductList,
+            TimeSpan.FromMinutes(10));
 
         logger.LogInformation("Product list cache invalidated and updated.");
     }
 
-    #endregion Private help methods 
+    #endregion Private help methods
 }

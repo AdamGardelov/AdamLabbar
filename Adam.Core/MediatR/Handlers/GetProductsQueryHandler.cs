@@ -5,10 +5,11 @@ using MediatR;
 
 namespace Adam.Core.MediatR.Handlers;
 
-public class GetProductsHandler(IProductRepository productRepository) : IRequestHandler<GetProductsQuery, IEnumerable<Product>?>
+internal sealed class GetProductsQueryHandler(IProductRepository productRepository)
+    : IRequestHandler<GetProductsQuery, IEnumerable<Product>?>
 {
     public async Task<IEnumerable<Product>?> Handle(GetProductsQuery query, CancellationToken cancellationToken)
     {
-        return await productRepository.GetProductsAsync();
+        return await productRepository.GetProductsAsync(cancellationToken);
     }
 }
